@@ -4,6 +4,9 @@ import App from "./App.tsx";
 import { DOMUtils } from "@/lib/automation/dom-utils";
 import { ActionRecorder, ActionPlayer } from "@/lib/automation/recorder";
 import { AutomationOrchestrator } from "@/lib/automation/orchestrator";
+import { PageSummaryService } from "@/lib/extractors/page-summary";
+import { ReactExtractor } from "@/lib/extractors/react-extractor";
+import { TailwindExtractor } from "@/lib/extractors/tailwind-extractor";
 import type { AutomationPlan } from "@/lib/types/ai.types";
 
 // Initialize automation tools
@@ -48,6 +51,34 @@ const orchestrator = new AutomationOrchestrator();
 		DOMUtils.waitForElement(selector, timeout),
 	highlightElement: (element: Element, duration?: number) =>
 		DOMUtils.highlightElement(element, duration),
+};
+
+// Expose extractor API globally
+(window as any).__extractorAPI = {
+	// Page Summary
+	generateSummary: () => PageSummaryService.generateSummary(),
+	generateQuickSummary: () => PageSummaryService.generateQuickSummary(),
+	detectPageType: () => PageSummaryService.detectPageType(),
+	extractMainTopics: () => PageSummaryService.extractMainTopics(),
+	extractStructuredData: () => PageSummaryService.extractStructuredData(),
+
+	// React Extraction
+	detectReact: () => ReactExtractor.detectReact(),
+	extractReact: () => ReactExtractor.extractAllComponents(),
+	findReactRoots: () => ReactExtractor.findReactRoots(),
+	extractReactComponent: (element: Element) =>
+		ReactExtractor.extractComponent(element),
+	generateJSX: (component: any) => ReactExtractor.generateJSX(component),
+
+	// Tailwind Extraction
+	detectTailwind: () => TailwindExtractor.detectTailwind(),
+	extractTailwind: () => TailwindExtractor.extractComponents(),
+	extractTailwindBySelector: (selector: string) =>
+		TailwindExtractor.extractBySelector(selector),
+	extractTailwindByCategory: (category: string) =>
+		TailwindExtractor.extractByCategory(category),
+	generateTailwindComponent: (component: any, framework: "react" | "vue") =>
+		TailwindExtractor.generateComponent(component, framework),
 };
 
 export default defineContentScript({

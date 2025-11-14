@@ -19,11 +19,17 @@ import {
 	Bot,
 	FileText,
 	Zap,
+	Code2,
+	Sparkles,
+	Copy,
+	Download,
 } from "lucide-react";
 
 function App() {
 	const [activeTab, setActiveTab] = useState("quick");
 	const [isRecording, setIsRecording] = useState(false);
+	const [summary, setSummary] = useState<string>("");
+	const [extractedCode, setExtractedCode] = useState<string>("");
 	const [aiConfig, setAIConfig] = useState({
 		provider: "openai",
 		apiKey: "",
@@ -75,6 +81,66 @@ function App() {
 		alert("AI configuration saved!");
 	};
 
+	const handleGenerateSummary = async () => {
+		setSummary("Generating summary...");
+		try {
+			const result = await executeInContentScript(`
+				(async () => {
+					const summary = await window.__extractorAPI.generateSummary();
+					return summary;
+				})()
+			`);
+			setSummary(JSON.stringify(result, null, 2));
+		} catch (error) {
+			setSummary(`Error: ${error}`);
+		}
+	};
+
+	const handleExtractReact = async () => {
+		setExtractedCode("Extracting React components...");
+		try {
+			const result = await executeInContentScript(`
+				(async () => {
+					const info = window.__extractorAPI.extractReact();
+					return info;
+				})()
+			`);
+			setExtractedCode(JSON.stringify(result, null, 2));
+		} catch (error) {
+			setExtractedCode(`Error: ${error}`);
+		}
+	};
+
+	const handleExtractTailwind = async () => {
+		setExtractedCode("Extracting Tailwind components...");
+		try {
+			const result = await executeInContentScript(`
+				(async () => {
+					const info = window.__extractorAPI.extractTailwind();
+					return info;
+				})()
+			`);
+			setExtractedCode(JSON.stringify(result, null, 2));
+		} catch (error) {
+			setExtractedCode(`Error: ${error}`);
+		}
+	};
+
+	const copyToClipboard = (text: string) => {
+		navigator.clipboard.writeText(text);
+		alert("Copied to clipboard!");
+	};
+
+	const downloadAsFile = (content: string, filename: string) => {
+		const blob = new Blob([content], { type: "text/plain" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = filename;
+		a.click();
+		URL.revokeObjectURL(url);
+	};
+
 	return (
 		<div className="w-[600px] h-[500px] p-4">
 			<div className="mb-4">
@@ -88,10 +154,18 @@ function App() {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab}>
-				<TabsList className="grid w-full grid-cols-4">
+				<TabsList className="grid w-full grid-cols-6">
 					<TabsTrigger value="quick">
 						<Zap className="w-4 h-4 mr-1" />
 						Quick
+					</TabsTrigger>
+					<TabsTrigger value="summary">
+						<Sparkles className="w-4 h-4 mr-1" />
+						Summary
+					</TabsTrigger>
+					<TabsTrigger value="extract">
+						<Code2 className="w-4 h-4 mr-1" />
+						Extract
 					</TabsTrigger>
 					<TabsTrigger value="config">
 						<Settings className="w-4 h-4 mr-1" />
@@ -172,6 +246,100 @@ function App() {
 							>
 								Get Context
 							</Button>
+						</CardContent>
+					</Card>
+				</TabsContent>
+
+				<TabsContent value="summary" className="space-y-4">
+					<Card>
+						<CardHeader>
+							<CardTitle>Page Summary</CardTitle>
+							<CardDescription>
+								Generate AI-powered summaries of the current page
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<Button onClick={handleGenerateSummary} className="w-full">
+								<Sparkles className="w-4 h-4 mr-2" />
+								Generate Page Summary
+							</Button>
+
+							{summary && (
+								<div className="space-y-2">
+									<div className="flex gap-2">
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => copyToClipboard(summary)}
+										>
+											<Copy className="w-4 h-4 mr-1" />
+											Copy
+										</Button>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => downloadAsFile(summary, "page-summary.json")}
+										>
+											<Download className="w-4 h-4 mr-1" />
+											Download
+										</Button>
+									</div>
+									<pre className="p-3 bg-muted rounded text-xs overflow-auto max-h-[300px]">
+										{summary}
+									</pre>
+								</div>
+							)}
+						</CardContent>
+					</Card>
+				</TabsContent>
+
+				<TabsContent value="extract" className="space-y-4">
+					<Card>
+						<CardHeader>
+							<CardTitle>Component Extraction</CardTitle>
+							<CardDescription>
+								Extract React components and Tailwind styles from the page
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="grid grid-cols-2 gap-2">
+								<Button onClick={handleExtractReact} variant="outline">
+									<Code2 className="w-4 h-4 mr-2" />
+									Extract React
+								</Button>
+								<Button onClick={handleExtractTailwind} variant="outline">
+									<Code2 className="w-4 h-4 mr-2" />
+									Extract Tailwind
+								</Button>
+							</div>
+
+							{extractedCode && (
+								<div className="space-y-2">
+									<div className="flex gap-2">
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => copyToClipboard(extractedCode)}
+										>
+											<Copy className="w-4 h-4 mr-1" />
+											Copy
+										</Button>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() =>
+												downloadAsFile(extractedCode, "extracted-components.json")
+											}
+										>
+											<Download className="w-4 h-4 mr-1" />
+											Download
+										</Button>
+									</div>
+									<pre className="p-3 bg-muted rounded text-xs overflow-auto max-h-[300px]">
+										{extractedCode}
+									</pre>
+								</div>
+							)}
 						</CardContent>
 					</Card>
 				</TabsContent>
