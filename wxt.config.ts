@@ -15,6 +15,16 @@ export default defineConfig({
 		},
 	}),
 	manifest: {
-		permissions: ["storage"],
+		permissions: [
+			"storage",
+			"activeTab",
+			"tabs",
+			"scripting",
+			"webNavigation",
+			"downloads",
+			"clipboardWrite",
+			"unlimitedStorage",
+		],
+		host_permissions: ["<all_urls>"],
 	},
 });
